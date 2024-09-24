@@ -3,12 +3,13 @@ const { DataTypes } = require('sequelize');
 async function up(queryInterface) {
   await queryInterface.createTable('faqs', {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
+      autoIncrement : true,
       allowNull: false,
       primaryKey: true,
     },
     catagory_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'catagories',

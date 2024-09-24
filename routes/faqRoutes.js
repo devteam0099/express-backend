@@ -6,7 +6,7 @@ const faqRoute = express.Router()
 faqRoute.post('/create',auth,createFaq)
 faqRoute.get('/list',auth,getFaq)
 faqRoute.put('/update',auth,updateFaq)
-faqRoute.delete('/delete/:id',auth,deleteFaq)
+faqRoute.delete('/delete',auth,deleteFaq)
 faqRoute.delete('/bulk-delete',auth,bulkFaqDelete)
 
 module.exports = faqRoute

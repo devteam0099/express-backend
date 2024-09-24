@@ -4,8 +4,8 @@ const faq = require('./faq.model.js')
 
 const catagory = sequelize.define('catagory',{
     id : {
-     type : DataTypes.UUID,
-     defaultValue : DataTypes.UUIDV4,
+     type : DataTypes.INTEGER,
+     autoIncrement : true,
      primaryKey : true,
      allowNull : false
     },

@@ -3,7 +3,8 @@ const { DataTypes } = require('sequelize');
 async function up(queryInterface) {
   await queryInterface.createTable('Users', {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
+      autoIncrement : true,
       allowNull: false,
       primaryKey: true,
     },

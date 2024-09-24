@@ -1,11 +1,10 @@
-// Import the necessary modules using require
 const { DataTypes } = require('sequelize');
 
-// Define the up function to create the 'catagories' table
 async function up(queryInterface) {
   await queryInterface.createTable('catagories', {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
+      autoIncrement : true,
       allowNull: false,
       primaryKey: true,
     },

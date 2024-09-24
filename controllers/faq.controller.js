@@ -1,8 +1,8 @@
 const faq = require("../models/faq.model.js");
 const catagory = require("../models/catagory.model.js");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const {validateAdmin} = require('../utils/jwt.js')
-const {emptyFieldFinder, errorResponse, successResponse} = require('../utils/constants.js')
+const {emptyFieldFinder, errorResponse, successResponse} = require('../utils/constants.js');
 
 const createFaq = async (req, res) => {
   const { question, answer, catagory_id, } = req.body;
@@ -15,12 +15,18 @@ const createFaq = async (req, res) => {
     return errorResponse(res,401,"Only admin can create FAQs")
   }
     try {
+      const resp = await catagory.findOne({where : {id : catagory_id}})
+      if (resp) {
         await faq.create({
           question,
           answer,
           catagory_id,
-        });
+        })
         successResponse(res,200,"faq has been created successfully")
+      }else{
+        errorResponse(res,404,"Catagory does not exist")
+      }
+        
       } catch (error) {
         console.log(error);
         errorResponse(res,500,error.message)
@@ -69,12 +75,13 @@ const updateFaq = async (req, res) => {
     return errorResponse(res,401,"Only admin can update FAQs")
   }
    try {
-    const data = await faq.findOne({where : {id}})
-    if (data) {
+    const faq_id =  await faq.findOne({where : {id}})
+    const catagoryID = await catagory.findOne({where : {id : catagory_id}})
+    if (faq_id && catagoryID) {
       await faq.update({catagory_id,question,answer},{where : {id}})
       successResponse(res,200,"FAQ has been updated successfully")
      }else{
-      errorResponse(res,404,"faq does not exist")
+      !faq_id? errorResponse(res,404,"Faq does not exist") : errorResponse(res,404,"Catagory does not exist")
        }  
     }catch (error) {
       console.log(error)
@@ -84,7 +91,7 @@ const updateFaq = async (req, res) => {
 };
 
 const deleteFaq = async (req, res) => {
-    const {id} = req.params
+    const {id} = req.query
     if (!id) {
         return errorResponse(400,"please select FAQ Id to delete")
     }

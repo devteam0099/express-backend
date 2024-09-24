@@ -79,7 +79,7 @@ const updateCatagory = async (req, res) => {
   try {
     const data = await catagory.findOne({where : {id : catagory_id}})
     if (data) {
-     const result = await catagory.update({name,description},{where : {id : catagory_id}})
+      await catagory.update({name,description},{where : {id : catagory_id}})
       successResponse(res,200,'Catagory has been updated successfully')  
     }else{
       errorResponse(res,404,"Catagory not found")
@@ -91,7 +91,8 @@ const updateCatagory = async (req, res) => {
 };
 
 const deleteCatagory = async (req, res) => {
-  const { catagory_id } = req.params;
+  const { catagory_id } = req.query;
+  console.log(catagory_id)
   if (!catagory_id) {
     return  errorResponse(res,400,"please provide catagory id to proceed")
   }
