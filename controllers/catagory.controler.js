@@ -31,6 +31,29 @@ const createCatagory = async (req, res) => {
   }
 };
 
+const getSingleCatagory = async(req,res) => {
+  const {id} = req.query
+  if (!id) {
+   return errorResponse(res,400,"Please provide catagory ID")
+  }
+  try {
+    const resp = await catagory.findOne({
+      where : {id},
+      include : [
+        {
+          model : faq,
+          attributes : ["id", "question", "answer", "created_at", "updated_at"]
+        }
+      ]
+    })
+    resp? successResponse(res,200,resp.dataValues) : errorResponse(res,404,"No catagory found")
+  } catch (error) {
+    console.log(error)
+    errorResponse(res,500,error.message)
+  }
+
+}
+
 const obtainCatagories = async (req, res) => {
   const {page_no,limit,name} = req.query
   try {
@@ -92,10 +115,9 @@ const updateCatagory = async (req, res) => {
 
 const deleteCatagory = async (req, res) => {
   const { catagory_id } = req.query;
-  console.log(catagory_id)
   if (!catagory_id) {
     return  errorResponse(res,400,"please provide catagory id to proceed")
-  }
+  } 
   const validateRole =  await validateAdmin(req.headers.auth_token)
   if (!validateRole) {
     return errorResponse(res,401,"Only admin can delete a catagory")
@@ -111,10 +133,10 @@ const deleteCatagory = async (req, res) => {
 
 const bulkCatagoryDelete = async(req,res) => {
     const {ids} = req.body
-    if (!(Array.isArray(ids) && ids.length > 0)) {
-      return !Array.isArray(ids)? errorResponse(res,400,"Ids should be array in bulk delete") : 
-             errorResponse(res,400,"Please provide atleast one ID to proceed")
-    }
+    // if (!(Array.isArray(ids) && ids.length > 0)) {
+    //   return !Array.isArray(ids)? errorResponse(res,400,"Ids should be array in bulk delete") : 
+    //          errorResponse(res,400,"Please select atleast one catagory to proceed")
+    // }
     const validateRole = await validateAdmin(req.headers.auth_token)
     if (!validateRole) {
     return errorResponse(res,401,"Only admin can delete catagories")
@@ -134,5 +156,6 @@ module.exports = {
   obtainCatagories,
   updateCatagory,
   deleteCatagory,
-  bulkCatagoryDelete
+  bulkCatagoryDelete,
+  getSingleCatagory
 };

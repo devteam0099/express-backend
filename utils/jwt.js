@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken')
 const key = process.env.SECRET_KEY
-console.log(key)
 
 const generateToken = async(payLoad)=>{
   if (!key) {
@@ -21,7 +20,6 @@ const validateAdmin = async(prev_token) => {
   }
     try {
      const decodedData = await jwt.verify(prev_token,key)
-     //decodedData.role = "user"
      return decodedData.role === "admin" ? true : false
     } catch (error) {
       console.log(error)

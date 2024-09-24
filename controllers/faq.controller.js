@@ -33,6 +33,26 @@ const createFaq = async (req, res) => {
       }
 };
 
+const getSingleFaq = async(req,res) => {
+  const {id} = req.query
+  if (!id) {
+    return errorResponse(res,400,"Please provide FAQ Id to proceed")
+  }
+  try {
+    const resp = await faq.findOne({
+      where : {id},
+      include : [{
+        model : catagory,
+        attributes : ["id", "name", "description", "created_at", "updated_at"]
+      }]
+    })
+    resp? successResponse(res,200,resp.dataValues) : errorResponse(res,404,"FAQ not found")
+  } catch (error) {
+    console.log(error)
+    errorResponse(res,500,error.message)
+  }
+}
+
 const getFaq = async (req, res) => {
   const { page_no, limit, name } = req.query;
   const findOptions = {
@@ -66,9 +86,14 @@ const getFaq = async (req, res) => {
 
 const updateFaq = async (req, res) => {
   const { catagory_id, question, answer, id } = req.body;
+  const regex = /^\d+$/
   if (!(catagory_id && question && answer && id)) {
     const emptyField = emptyFieldFinder({catagory_id,question,answer,id})
     return errorResponse(res,400,`${emptyField} should not be empty`)
+  }
+  if (!(regex.test(id) && regex.test(catagory_id))) {
+    return !regex.test(id)? errorResponse(res,400,"Please provide Id in correct format") 
+    : errorResponse(res,400,"Please provide catagory Id in correct format")
   }
   const validateRole = await validateAdmin(req.headers.auth_token)
   if (!validateRole) {
@@ -93,7 +118,7 @@ const updateFaq = async (req, res) => {
 const deleteFaq = async (req, res) => {
     const {id} = req.query
     if (!id) {
-        return errorResponse(400,"please select FAQ Id to delete")
+        return errorResponse(res,400,"please select FAQ Id to delete")
     }
     const validateRole =  await validateAdmin(req.headers.auth_token)
     if (!validateRole) {
@@ -111,10 +136,6 @@ const deleteFaq = async (req, res) => {
 
 const bulkFaqDelete = async(req,res) => {
     const {ids} = req.body
-    if (!(Array.isArray(ids) && ids.length > 0)) {
-        return  !Array.isArray(ids)? errorResponse(res,400,"Please provide ids in array format") :
-                errorResponse(res,400,"Please provide atleast one id to proceed")
-    }
     const validateRole = await validateAdmin(req.headers.auth_token)
     if (!validateRole) {
     return errorResponse(res,401,"Only admin can delete FAQs")
@@ -129,4 +150,4 @@ const bulkFaqDelete = async(req,res) => {
     }
 
 }
-module.exports = { createFaq, getFaq, updateFaq, deleteFaq,bulkFaqDelete };
+module.exports = { createFaq, getFaq, updateFaq, deleteFaq,bulkFaqDelete,getSingleFaq };
