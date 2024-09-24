@@ -1,0 +1,125 @@
+const faq = require("../models/faq.model.js");
+const catagory = require("../models/catagory.model.js");
+const { Op } = require("sequelize");
+const {validateAdmin} = require('../utils/jwt.js')
+const {emptyFieldFinder, errorResponse, successResponse} = require('../utils/constants.js')
+
+const createFaq = async (req, res) => {
+  const { question, answer, catagory_id, } = req.body;
+  if (!(question && answer && catagory_id)) {
+    const emptyField = emptyFieldFinder({question,answer,catagory_id})
+    return errorResponse(res,400,`${emptyField} should not be empty`)
+  }
+  const validateRole = validateAdmin(req.headers.auth_token)
+  if (!validateRole) {
+    return errorResponse(res,401,"Only admin can create FAQs")
+  }
+    try {
+        await faq.create({
+          question,
+          answer,
+          catagory_id,
+        });
+        successResponse(res,200,"faq has been created successfully")
+      } catch (error) {
+        console.log(error);
+        errorResponse(res,500,error.message)
+      }
+};
+
+const getFaq = async (req, res) => {
+  const { page_no, limit, name } = req.query;
+  const findOptions = {
+    where: {},
+    include: [
+      {
+        model: catagory,
+        attributes: ["id", "name", "description", "created_at", "updated_at"],
+      },
+    ],
+  };
+  if (limit && limit !== "") {
+    findOptions.limit = limit;
+  }
+  if (page_no && page_no !== "" && limit && limit !== "") {
+    findOptions.offset = (parseInt(page_no) - 1) * parseInt(limit);
+  }
+  if (name && name !== "") {
+    findOptions.where.question = {
+      [Op.iLike]: `%${name}%`,
+    };
+  }
+  try {
+    const count = await faq.count()
+    const faqs = await faq.findAll(findOptions);
+    successResponse(res,200,faqs,count)
+  } catch (error) {
+    errorResponse(res,500,error.message)
+  }
+};
+
+const updateFaq = async (req, res) => {
+  const { catagory_id, question, answer, id } = req.body;
+  if (!(catagory_id && question && answer && id)) {
+    const emptyField = emptyFieldFinder({catagory_id,question,answer,id})
+    return errorResponse(res,400,`${emptyField} should not be empty`)
+  }
+  const validateRole = await validateAdmin(req.headers.auth_token)
+  if (!validateRole) {
+    return errorResponse(res,401,"Only admin can update FAQs")
+  }
+   try {
+    const data = await faq.findOne({where : {id}})
+    if (data) {
+      await faq.update({catagory_id,question,answer},{where : {id}})
+      successResponse(res,200,"FAQ has been updated successfully")
+     }else{
+      errorResponse(res,404,"faq does not exist")
+       }  
+    }catch (error) {
+      console.log(error)
+      errorResponse(res,500,error.message)
+     } 
+    
+};
+
+const deleteFaq = async (req, res) => {
+    const {id} = req.params
+    if (!id) {
+        return errorResponse(400,"please select FAQ Id to delete")
+    }
+    const validateRole =  await validateAdmin(req.headers.auth_token)
+    if (!validateRole) {
+    return errorResponse(res,401,"Only admin can delete FAQs")
+    }
+    try {
+        const resp = await faq.destroy({where : {id}})
+        resp? successResponse(res,200,"FAQ has been deleted successfully") :
+        errorResponse(res,404,"FAQ does not exist")
+    } catch (error) {
+        console.log(error)
+        errorResponse(res,500,error.message)
+    }
+};
+
+const bulkFaqDelete = async(req,res) => {
+    const {ids} = req.body
+    if (!(Array.isArray(ids) && ids.length > 0)) {
+        return  !Array.isArray(ids)? errorResponse(res,400,"Please provide ids in array format") :
+                errorResponse(res,400,"Please provide atleast one id to proceed")
+    }
+    const validateRole = await validateAdmin(req.headers.auth_token)
+    if (!validateRole) {
+    return errorResponse(res,401,"Only admin can delete FAQs")
+    }
+    try {
+        const resp = await faq.destroy({where : {id : ids}})
+        resp? successResponse(res,200,"Selected FAQs have been deleted successfully") :
+        errorResponse(res,404,"FAQs does not exist")
+    } catch (error) {
+        console.log(error)
+        errorResponse(res,500,error.message)
+    }
+
+}
+module.exports = { createFaq, getFaq, updateFaq, deleteFaq,bulkFaqDelete };
