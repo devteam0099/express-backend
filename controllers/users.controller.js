@@ -1,83 +1,65 @@
-const {encryptPassword,comparePassword,} = require("../utils/encryptPassword.js");
-const { generateToken } = require("../utils/jwt.js");
+const {encryptPassword,comparePassword,generateToken} = require("../utils/authHelper.js");
 const User = require("../models/users.model.js");
-const {emptyFieldFinder,successResponse,errorResponse} = require('../utils/constants.js')
-const Op = require("sequelize");
+const message = require('../utils/constants/constants.js')
+const {validateFields,successResponse,errorResponse} = require('../utils/validation.js')
 
 const signup = async (req, res) => {
   const { name, username, email, password, role } = req.body;
 
   if (!(name && username && email && password && role)) {
-    const emptyField = emptyFieldFinder({name,username,email,password,role})
-    return errorResponse(res,400,`${emptyField} should not be empty`)
+    const emptyField = validateFields({name,username,email,password,role})
+    return res.send(errorResponse(400,emptyField))
   }
 
   try {
-    const existingemail = await User.findOne({
-      where: {email,},
-    });
-
+    const existingemail = await User.findOne({where: {email}});
     if (existingemail) {
-      return errorResponse(res,409,'Email already exists! Try another')
+      return res.send(errorResponse(409,message.USER_EXISTS))
     }
     const hashedPassword = await encryptPassword(password);
-
     if (!hashedPassword) {
-      return errorResponse(res,500,"Password encryption failed. Please try again.")
+      return res.send(errorResponse(500,message.JWT_ENC_ERROR))
     }
-    try {
-      await User.create({
-        name,
-        email,
-        username,
-        password: hashedPassword,
-        role,
-      });
-
-      return successResponse(res,201,'User has been created successfully')
-    } catch (error) {
-      console.error("Error creating user:", error);
-      return errorResponse(res,500,"User could not be registered. Please try again.")
-    }
+    await User.create({
+      name,
+      email,
+      username,
+      password: hashedPassword,
+      role,
+    });
+    return res.send(successResponse(201,message.SIGNED_UP))
   } catch (error) {
-    console.error("Error during signup:", error);
-    return errorResponse(res,500,"An internal error occurred. Please try again.")
+    console.error(error);
+    return res.send(errorResponse(500,message.INTERNAL_ERROR))
   }
 };
 
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!(email && password)) {
-    const emptyField = emptyFieldFinder({email,password})
-   return errorResponse(res,400,`${emptyField} should not be empty`)
+    const emptyField = validateFields({email,password})
+    return res.send(errorResponse(400,emptyField))
   }
   try {
     const user = await User.findOne({ where: { email } });
     if (user) {
       const { dataValues } = user;
-      try {
-        const matchedPassword = await comparePassword(
-          password,
-          dataValues.password
-        );
-        if (matchedPassword) {
-          const token = await generateToken(dataValues);
-          res.cookie("auth_token", token, {
-              maxAge: 24 * 60 * 60 * 1000,
-              httpOnly: false,
-            })
-            .send({ code: 200, data: "Login Successful" });
-        } else {
-          errorResponse(res,401,"Incorrect Password")
-        }
-      } catch (error) {
-        errorResponse(res,500,"an error occured! please try again")
+      const matchedPassword = await comparePassword(password,dataValues.password);
+      if (matchedPassword) {
+        const token = await generateToken(dataValues);
+        return res.cookie("auth_token", token, {
+            maxAge: 24 * 60 * 60 * 1000,
+            httpOnly: false,
+          })
+          .send(successResponse(200,message.LOGIN));
+      } else {
+        return res.send(errorResponse(401,message.INVALID_PASSWORD))
       }
     } else {
-      errorResponse(res,404,"user does not exist")
+      return res.send(errorResponse(404,message.USER_NOT_EXIST))
     }
   } catch (error) {
-    errorResponse(res,500,"an error occured! please try again")
+    return res.send(errorResponse(500,message.INTERNAL_ERROR))
   }
 };
 

@@ -7,7 +7,6 @@ const faqRoute = require('./routes/faqRoutes.js')
 const cookieParser = require('cookie-parser')
 
 const app = express()
-const port = 8700
 dbConnection()
 app.use(express.json())
 app.use(cookieParser())
@@ -17,6 +16,6 @@ app.use('/api/faq',faqRoute)
 app.use('/api/catagory',catagoryRoute)
 app.use('/api/users',userRoute)
 
-app.listen(port,()=>{
-    console.log(`server is running on port ${port}`)
+app.listen(process.env.PORT,()=>{
+    console.log(`server is running on port ${process.env.PORT}`)
 })

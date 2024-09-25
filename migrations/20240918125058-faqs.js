@@ -38,7 +38,8 @@ async function up(queryInterface) {
 }
 
 async function down(queryInterface) {
-  await queryInterface.dropTable('faq');
+  await queryInterface.removeConstraint('faqs','faqs_catagory_id_fkey')
+  await queryInterface.dropTable('faqs');
 }
 
 module.exports = {

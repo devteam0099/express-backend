@@ -1,4 +1,6 @@
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const key = process.env.SECRET_KEY
 
 const encryptPassword = async (password) => {
   try {
@@ -6,7 +8,7 @@ const encryptPassword = async (password) => {
     const hashPass = await bcrypt.hash(password, salt);
     return hashPass;
   } catch (error) {
-    console.error('Error encrypting password:', error);
+    console.error(error);
     return null;
   }
 };
@@ -16,10 +18,22 @@ const comparePassword = async(password,hashedPass) => {
     const matchPassword = await bcrypt.compare(password,hashedPass)
     return matchPassword
   } catch (error) {
-    console.log('error in matching password',error)
+    console.log(error)
     return false
   }
 }
-module.exports = {
-  encryptPassword,comparePassword
+
+const generateToken = async(payLoad)=>{
+  if (!key) {
+    return null
+  }
+     try {
+       const token = jwt.sign(payLoad,key)
+       return token
+     } catch (error) {
+        console.log(error)
+        return null        
+     }
 }
+
+module.exports = {encryptPassword,comparePassword,generateToken}

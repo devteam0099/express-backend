@@ -27,12 +27,9 @@ async function up(queryInterface) {
   });
 }
 
-// Define the down function to drop the 'catagories' table
 async function down(queryInterface) {
   await queryInterface.dropTable('catagories');
 }
-
-// Export the functions using module.exports
 module.exports = {
   up,
   down,
